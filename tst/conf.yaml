@@ -1,0 +1,6 @@
+programs:
+  nginx:
+    cmd: "sudo /usr/sbin/nginx -g 'daemon off;'"
+
+  python:
+    cmd: "python3 -m http.server 8000"

@@ -1,0 +1,37 @@
+programs:
+  nginx:
+    cmd: "sudo /usr/sbin/nginx -g 'daemon off;'"
+    numprocs: 1
+    umask: 022
+    workingdir: /tmp
+    autostart: true # default is true if does not exist 
+    autorestart: unexpected  #  can be  true, false, unexpected
+    exitcodes:
+      - 0
+      - 2
+    startretries: 3 # how many times the program stops trying to start and sets status to FATAL
+    starttime: 5
+    stopsignal: TERM
+    stoptime: 10
+    stdout: /tmp/nginx.stdout
+    stderr: /tmp/nginx.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
+
+  python_server:
+    cmd: "python3 -m http.server 8000"
+    numprocs: 8
+    umask: 077
+    workingdir: /tmp
+    autostart: true
+    autorestart: unexpected  #  can be  true, false, unexpected
+    exitcodes: 0
+    startretries: 3
+    starttime: 5
+    stopsignal: USR1
+    stoptime: 10
+    stdout: /tmp/vgsworker.stdout
+    stderr: /tmp/vgsworker.stderr
+globals:
+  logfile: /tmp/taskmaster.log
