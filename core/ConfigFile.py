@@ -12,9 +12,6 @@ class ConfigFile:
         except FileNotFoundError:
             print(f"Config file {path} not found.")
             self.config = {}
-
-    def get(self, arg):
-        return self.config.get(arg, None)
     
     def getConfig(self):
         return self.config
@@ -28,3 +25,4 @@ class ConfigFile:
 
     def __str__(self):
         return self.config
+        

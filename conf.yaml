@@ -3,15 +3,15 @@ programs:
     cmd: "sudo /usr/sbin/nginx -g 'daemon off;'"
     numprocs: 1
     umask: 022
-    workingdir: /tmp
+    workingdir: /tmp 
     autostart: true # default is true if does not exist 
     autorestart: unexpected  #  can be  true, false, unexpected
     exitcodes:
       - 0
       - 2
-    startretries: 3 # how many times the program stops trying to start and sets status to FATAL
-    starttime: 5
-    stopsignal: TERM
+    startretries: 3 # how many times the program will try to start before giving up and setting status to FATAL
+    starttime: 5 # how long the program should be in the running state before it is considered successful
+    stopsignal: TERM # signal to send to the program to stop it
     stoptime: 10
     stdout: /tmp/nginx.stdout
     stderr: /tmp/nginx.stderr
@@ -28,10 +28,11 @@ programs:
     autorestart: unexpected  #  can be  true, false, unexpected
     exitcodes: 0
     startretries: 3
-    starttime: 5
+    starttime: 5 # how long the program should be in the running state before it is considered successful
     stopsignal: USR1
     stoptime: 10
     stdout: /tmp/vgsworker.stdout
     stderr: /tmp/vgsworker.stderr
+
 globals:
-  logfile: /tmp/taskmaster.log
+  logfile: /tmp/taskmaster.log # default is /tmp/taskmaster.log
