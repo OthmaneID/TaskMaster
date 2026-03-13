@@ -12,9 +12,6 @@ class ConfigFile:
         except FileNotFoundError:
             print(f"Config file {path} not found.")
             self.config = {}
-    
-    def getConfig(self):
-        return self.config
 
     def validate(self):
         pass

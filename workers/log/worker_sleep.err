@@ -1,5 +1,0 @@
-Traceback (most recent call last):
-  File "/home/othmaneid/Desktop/1337Projects/TaskMaster/workers/worker_sleep.py", line 3, in <module>
-    time.sleep(10)
-    ~~~~~~~~~~^^^^
-KeyboardInterrupt

@@ -17,18 +17,18 @@ class Supervisor:
             logging.basicConfig(filename=self.logfile, filemode='w', level=logging.INFO, format='%(asctime)s - %(levelname)s : %(message)s')
 
             # get Programs to supervise
-            configObject = self.config.getConfig()
+            configObject = self.config.config
             if "programs" not in configObject.keys():
                 raise Exception("Config parsing error: no 'programs' found")
 
             for program in configObject["programs"].keys():
-                prog = Program(program, configObject["programs"][program])
-                self.programs.append(prog)
+                numprocs = configObject["programs"].get(program, {}).get("numprocs")
+                # this is for handling multiple processes for each program
+                for i in range(numprocs):
+                    prog = Program(program, configObject["programs"][program], i+1)
+                    self.programs.append(prog)
         except Exception as e:
             print(f"config file parsing error : {e}")
-            
-    def getPrograms(self) -> list[dict[str, Program]]:
-        return self.programs
 
 
     # checks to program status , restarts programs that needs restarting , change status and other variables accordingly
@@ -37,18 +37,18 @@ class Supervisor:
         for program in self.programs:
             program.updateStatus()
             status = program.status
-            print(f"{program.name} status: {status}, code: {program.process.returncode if program.process is not None else "None"}")
+            print(f"{program.name}({program.processNum}) status: {status}, code: {program.process.returncode if program.process is not None else "None"}")
             # only restart if autorestart is true and retries is not 0
             if program.autorestart:
                 if status in ["backoff", "fatal", "down"]:
                     if program.startretries > 0:
-                            print(f"Restarting {program.name} in backoff, retries left: {program.startretries}")
+                            print(f"Restarting {program.name}({program.processNum}) in backoff, retries left: {program.startretries}")
                             program.startretries -= 1
                             program.run()
-                            print(f"Restarting {program.name}")
-                            logging.info(f"Restarted {program.name}")
+                            logging.info(f"Restarted {program.name}({program.processNum})")
                     else:
-                        logging.error(f"Max retries reached")
+                        print(f"{program.name}({program.processNum}) : Max retries reached")
+                        logging.info(f"{program.name}({program.processNum}) : Max retries reached")
         # we should add a logging system into a file provided in the conf.yaml or a default one instead
         # ...
 
@@ -58,11 +58,15 @@ class Supervisor:
         for program in self.programs:
             if program.autostart:
                 program.run()
-                print(f"Started {program.name}")
-                logging.info(f"Started {program.name}")
+                print(f"Started {program.name}({program.processNum})")
+                logging.info(f"Started {program.name}({program.processNum})")
 
         # this is the main loop that monitors the programs 
-        while True:
-            self.monitor()
-            print("\r")
-            time.sleep(1)
+        try:
+
+            while True:
+                self.monitor()
+                print("\r")
+                time.sleep(1)
+        except KeyboardInterrupt as e:
+            print(f"program interrupted : {e}")
