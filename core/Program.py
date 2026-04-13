@@ -38,7 +38,6 @@ class Program:
         self.stoptime = ProgramConfig.get("stoptime", 1)
         self.exitcodes = ProgramConfig.get("exitcodes", [0])
 
-        self.numprocs = ProgramConfig.get("numprocs", 1)
         self.processNum = processNum
         SIGNALS = {
             "HUP": signal.SIGHUP,
@@ -64,21 +63,20 @@ class Program:
 
     def run(self) -> None:
 
-        for i in range(self.numprocs):
-            self.process = subprocess.Popen(
-                                shlex.split(self.cmd),
-                                stdout=self.stdout, 
-                                stderr=self.stderr, 
-                                env=self.env, 
-                                cwd=self.workdir,
-                                preexec_fn=lambda: os.umask(self.umask),
-                            )
-            # self.process.
-            if self.process.poll() is None:
-                self.status = "starting"
-                self.start_ts = time.time()
-            else:
-                self.status = "down"
+        self.process = subprocess.Popen(
+                            shlex.split(self.cmd),
+                            stdout=self.stdout, 
+                            stderr=self.stderr, 
+                            env=self.env, 
+                            cwd=self.workdir,
+                            preexec_fn=lambda: os.umask(self.umask),
+                        )
+        # self.process.
+        if self.process.poll() is None:
+            self.status = "starting"
+            self.start_ts = time.time()
+        else:
+            self.status = "down"
 
 
     def updateStatus(self):
@@ -97,13 +95,6 @@ class Program:
                         self.status = "backoff"
                     else:
                         self.status = "fatal"
-
-
-    # def kill(self) -> None:
-    #     if self.process.poll() is None:
-    #         self.process.kill()
-    #         self.process.wait()
-    #         # self.status = "exited"
     
 
     def __str__(self) -> str:

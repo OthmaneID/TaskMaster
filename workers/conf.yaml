@@ -41,7 +41,7 @@ programs:
     umask: 022
     stopsignal: TERM
     workdir: /home/othmaneid/Desktop/1337Projects/TaskMaster
-    stdout: "workers/log/worker_sleep.out"
+    stdout: "workers/log/worker_sleep1.out"
     stderr: "workers/log/worker_sleep.err"
 
   worker_flaky:
@@ -59,4 +59,5 @@ programs:
     stdout: "workers/log/worker_flaky.out"
     stderr: "workers/log/worker_flaky.err"
 globals:
+  logfile: "/tmp/taskmaster.log"
   
