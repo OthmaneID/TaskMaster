@@ -1,7 +1,10 @@
+import json
 import time
 from core.Program import Program
 from core.ConfigFile import ConfigFile
 import logging
+
+from core.TcpServer import TcpServer
 
 
 
@@ -9,6 +12,7 @@ class Supervisor:
 
     def __init__(self, config : ConfigFile):
         try:
+            self.tcpServer = TcpServer()
             self.config : ConfigFile = config
             self.programs : list[Program] = []
             self.last_config_check = 0
@@ -22,6 +26,7 @@ class Supervisor:
             self._load_programs()
         except Exception as e:
             print(f"config file parsing error : {e}")
+            exit(1)
 
     def _load_programs(self):
         """Load programs from current config"""
@@ -106,7 +111,7 @@ class Supervisor:
         for key, new_prog in new_programs_dict.items():
             if key in old_programs_dict:
                 old_prog = old_programs_dict[key]
-                # Check if program configuration changed significantly
+
                 if self._program_config_changed(old_prog, new_prog):
                     if old_prog.process and old_prog.process.poll() is None:
                         print(f"Restarting modified program {new_prog.name}({new_prog.processNum})")
@@ -117,6 +122,7 @@ class Supervisor:
                         new_prog.run()
                         print(f"Started modified program {new_prog.name}({new_prog.processNum})")
                         logging.info(f"Started modified program {new_prog.name}({new_prog.processNum})")
+
 
     def _program_config_changed(self, old_prog, new_prog):
         """Check if program configuration has changed"""
@@ -152,9 +158,7 @@ class Supervisor:
         return old_config != new_config
 
 
-    # checks to program status , restarts programs that needs restarting , change status and other variables accordingly
     def monitor(self) -> None:
-        # Check for config changes every 3 seconds
         current_time = time.time()
         if current_time - self.last_config_check >= self.config_check_interval:
             changed, message = self.config.check_for_changes()
@@ -162,14 +166,12 @@ class Supervisor:
                 self._handle_config_change(self.config.config, message)
             self.last_config_check = current_time
         
-        # check status of all self.programs
         programs_copy = self.programs.copy()
         
         for program in programs_copy:
             program.updateStatus()
             status = program.status
             print(f"{program.name}({program.processNum}) status: {status}, code: {program.process.returncode if program.process is not None else "None"}")
-            # only restart if autorestart is true and retries is not 0
             if program.autorestart:
                 if status in ["backoff", "fatal", "down"]:
                     if program.startretries > 0:
@@ -181,8 +183,17 @@ class Supervisor:
                         print(f"{program.name}({program.processNum}) : Max retries reached")
                         logging.info(f"{program.name}({program.processNum}) : Max retries reached")
 
+
+    #  we need to handle each command (list, status <service_name>, stop <service_name>, restart <service_name>, start <service_name>)
+    def handle_remote_command(self, cmd:list[str]):
+        if cmd[0] == "list":
+            res = {"data" : [{"name": program.name, "status": program.status} for program in self.programs]}
+            return json.dumps(res, indent=4)
+        return ""
+
+
+
     def run(self) -> None:
-        # Start initial programs
         programs_copy = self.programs.copy()
         
         for program in programs_copy:
@@ -194,6 +205,10 @@ class Supervisor:
         # this is the main loop that monitors the programs and checks config
         try:
             while True:
+                client_socket, data = self.tcpServer.check_for_new_connection()
+                if client_socket and data:
+                    response = self.handle_remote_command(data.split(" "))
+                    self.tcpServer.send_response(client_socket, response)
                 self.monitor()
                 print("\r")
                 time.sleep(1)

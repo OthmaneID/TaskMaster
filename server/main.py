@@ -4,6 +4,7 @@ import sys
 
 if __name__ == "__main__":
 
+
     config_path = sys.argv[1] if len(sys.argv) > 1 else "conf.yaml"
     config = ConfigFile(config_path)
     supervisor = Supervisor(config)

@@ -1,0 +1,63 @@
+programs:
+  worker_success:
+    cmd: "python3 /home/othmaneid/Desktop/1337Projects/TaskMaster/server/workers/worker_success.py"
+    autostart: true
+    numprocs: 3
+    autorestart: true
+    startretries: 5
+    starttime: 1
+    stoptime: 10 # default will be 1sec
+    exitcodes: [0]
+    umask: 022
+    stopsignal: TERM
+    workdir: /home/othmaneid/Desktop/1337Projects/TaskMaster
+    stdout: "/home/othmaneid/Desktop/1337Projects/TaskMaster/server/workers/log/worker_success.out"
+    stderr: "/home/othmaneid/Desktop/1337Projects/TaskMaster/server/workers/log/worker_success.err"
+
+  worker_fail:
+    cmd: "python3 /home/othmaneid/Desktop/1337Projects/TaskMaster/server/workers/worker_fail.py"
+    autostart: true
+    numprocs: 3
+    autorestart: true
+    startretries: 5
+    starttime: 1
+    stoptime: 10
+    exitcodes: [0]
+    umask: 022
+    stopsignal: TERM # default signal will be using is TERM
+    workdir: /home/othmaneid/Desktop/1337Projects/TaskMaster
+    stdout: "/home/othmaneid/Desktop/1337Projects/TaskMaster/server/workers/log/worker_fail.out"
+    stderr: "/home/othmaneid/Desktop/1337Projects/TaskMaster/server/workers/log/worker_fail.err"
+
+  worker_sleep:
+    cmd: "python3 /home/othmaneid/Desktop/1337Projects/TaskMaster/server/workers/worker_sleep.py"
+    autostart: true
+    numprocs: 3
+    autorestart: true
+    startretries: 5
+    starttime: 1
+    stoptime: 10
+    exitcodes: [0]
+    umask: 022
+    stopsignal: TERM
+    workdir: /home/othmaneid/Desktop/1337Projects/TaskMaster
+    stdout: "/home/othmaneid/Desktop/1337Projects/TaskMaster/server/workers/log/worker_sleep1.out"
+    stderr: "/home/othmaneid/Desktop/1337Projects/TaskMaster/server/workers/log/worker_sleep.err"
+
+  worker_flaky:
+    cmd: "python3 /home/othmaneid/Desktop/1337Projects/TaskMaster/server/workers/worker_flaky.py"
+    autostart: true
+    numprocs: 3
+    autorestart: true
+    startretries: 5
+    starttime: 1
+    stoptime: 10
+    exitcodes: [0]
+    umask: 022
+    stopsignal: TERM
+    workdir: /home/othmaneid/Desktop/1337Projects/TaskMaster
+    stdout: "/home/othmaneid/Desktop/1337Projects/TaskMaster/server/workers/log/worker_flaky.out"
+    stderr: "/home/othmaneid/Desktop/1337Projects/TaskMaster/server/workers/log/worker_flaky.err"
+globals:
+  logfile: "/tmp/taskmaster.log"
+  
