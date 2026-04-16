@@ -1,3 +1,4 @@
+import logging
 import subprocess
 import shlex
 import time
@@ -40,18 +41,18 @@ class Program:
         self.exitcodes = ProgramConfig.get("exitcodes", [0])
 
         self.processNum = processNum
-        SIGNALS = {
-            "HUP": signal.SIGHUP,
-            "INT": signal.SIGINT,
-            "QUIT": signal.SIGQUIT,
-            "TERM": signal.SIGTERM,
-            "KILL": signal.SIGKILL,
-            "USR1": signal.SIGUSR1,
-            "USR2": signal.SIGUSR2,
-        }
-        self.stopsignal = SIGNALS.get(ProgramConfig.get("stopsignal", "TERM"), None)
-        if self.stopsignal is None:
-            print(f"Config Error: {ProgramConfig.get("stopsignal")} cannot be handeled, please use one of these : {list(SIGNALS.keys())}")
+        # SIGNALS = {
+        #     "HUP": signal.SIGHUP,
+        #     "INT": signal.SIGINT,
+        #     "QUIT": signal.SIGQUIT,
+        #     "TERM": signal.SIGTERM,
+        #     "KILL": signal.SIGKILL,
+        #     "USR1": signal.SIGUSR1,
+        #     "USR2": signal.SIGUSR2,
+        # }
+        self.stopsignal = ProgramConfig.get("stopsignal", "TERM")
+        if self.stopsignal not in ["HUP", "INT", "QUIT", "TERM", "KILL", "USR1", "USR2"]:
+            print(f"Config Error: {ProgramConfig.get("stopsignal")} cannot be handeled, please use one of these : HUP, INT, QUIT, TERM, KILL, USR1, USR2")
             exit(1)
 
         # for future use
@@ -76,8 +77,12 @@ class Program:
         if self.process.poll() is None:
             self.status = "starting"
             self.start_ts = time.time()
+            print(f"Started {self.name}({self.processNum})")
+            logging.info(f"Started {self.name}({self.processNum})")
         else:
             self.status = "down"
+            print(f"Failed to start {self.name}({self.processNum})")
+            logging.error(f"Failed to start {self.name}({self.processNum})")
 
 
     def updateStatus(self):

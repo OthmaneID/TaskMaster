@@ -9,6 +9,8 @@ class MyShell(Cmd):
     def default(self, line: str) -> None:
         print(f"Unknown command: {line}")
 
+
+    #  what should happen if the service is already running?
     def do_start(self, arg):
         """
         *****************Help*****************
@@ -16,11 +18,16 @@ class MyShell(Cmd):
         ------Usage: start <service_name>\n
         """
         response = self._send_to_server(f"start {arg}")
-        # handle reponse accordingly
-        # ...
+        res : dict = json.loads(response)
+        
+        if res.get("error"):
+            print(res["error"])
+        else:
+            print(res["data"])
         return False
         # return True
 
+    # clarify if the retry is going to consume the retry count or ignore the config params
     def do_restart(self, arg):
         """
         *****************Help*****************
@@ -85,6 +92,8 @@ class MyShell(Cmd):
         return False
         # return True
 
+
+    #  need to clarify if the stop ignores the config params like autostart, autorestart, etc.
     def do_stop(self, arg):
         """
         *****************Help*****************

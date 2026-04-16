@@ -5,6 +5,7 @@ from core.ConfigFile import ConfigFile
 import logging
 
 from core.TcpServer import TcpServer
+from server.core.handleRequest import HandleRequest
 
 
 
@@ -186,23 +187,15 @@ class Supervisor:
 
     #  we need to handle each command (list, status <service_name>, stop <service_name>, restart <service_name>, start <service_name>)
     def handle_remote_command(self, cmd:list[str]):
+        handler = HandleRequest()
         if cmd[0] == "list":
-            res = {"data" : [{"name": program.name, "status": program.status} for program in self.programs]}
-            return json.dumps(res, indent=4)
-        
-        if cmd[0] == "status":
-            for program in self.programs:
-                if program.name == cmd[1]:
-                    # info to return name, number of processes, status, stop signal, exit codes
-                    return json.dumps({"data": {
-                        "name": program.name,
-                        "procs": program.totalProcs,
-                        "status": program.status,
-                        "stop_signal": program.stopsignal,
-                        "exit_codes": program.exitcodes
-                    }})
-        return json.dumps({"error": "Program not found"})
+            return handler.list(self.programs)
 
+        if cmd[0] == "status":
+            return handler.status(cmd[1], self.programs)
+
+        if cmd[0] == "start":
+            return handler.start(cmd[1], self.programs)
 
 
     def run(self) -> None:
@@ -211,8 +204,6 @@ class Supervisor:
         for program in programs_copy:
             if program.autostart:
                 program.run()
-                print(f"Started {program.name}({program.processNum})")
-                logging.info(f"Started {program.name}({program.processNum})")
 
         # this is the main loop that monitors the programs and checks config
         try:
