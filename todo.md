@@ -14,7 +14,7 @@
 
 7. Add logging: global logfile and per-program stdout/stderr.  DONE
 
-8. Provide a minimal CLI: `start`, `stop`, `restart`, `status`. DOING
+8. Provide a minimal CLI: `start`, `stop`, `restart`, `status`. DOING       <----------
 
 9. Add test script or basic tests for restart policy and exit codes.  DONE (workers dir)
 

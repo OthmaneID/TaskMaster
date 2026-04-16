@@ -40,8 +40,31 @@ class MyShell(Cmd):
         ------Usage: status <service_name>\n
         """
         response = self._send_to_server(f"status {arg}")
-        # handle reponse accordingly
-        # ...
+        res : dict = json.loads(response)
+
+        #  data that is returned :
+        # "name": program.name,
+        # "procs": program.totalProcs,
+        # "status": program.status,
+        # "stop_signal": program.stopsignal,
+        # "exit_codes": program.exitcodes
+
+        if res.get("data"):
+            data : dict = res['data']
+            print(f"\n{'='*50}")
+            print(f"Program Status: {data.get('name', 'N/A')}")
+            print(f"{'='*50}")
+            print(f"  Name        : {data.get('name', 'N/A')}")
+            print(f"  Processes   : {data.get('procs', 'N/A')}")
+            print(f"  Status      : {data.get('status', 'N/A')}")
+            print(f"  Stop Signal : {data.get('stop_signal', 'N/A')}")
+            print(f"  Exit Codes  : {data.get('exit_codes', 'N/A')}")
+            print(f"{'='*50}\n")
+        else:
+            if res.get('error'):
+                print(f"Error: {res['error']}")
+            else:
+                print(f"No data available")
         return False
         # return True
 

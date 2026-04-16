@@ -29,7 +29,7 @@ class Supervisor:
             exit(1)
 
     def _load_programs(self):
-        """Load programs from current config"""
+
         configObject = self.config.config
         if "programs" not in configObject.keys():
             raise Exception("Config parsing error: no 'programs' found")
@@ -189,7 +189,19 @@ class Supervisor:
         if cmd[0] == "list":
             res = {"data" : [{"name": program.name, "status": program.status} for program in self.programs]}
             return json.dumps(res, indent=4)
-        return ""
+        
+        if cmd[0] == "status":
+            for program in self.programs:
+                if program.name == cmd[1]:
+                    # info to return name, number of processes, status, stop signal, exit codes
+                    return json.dumps({"data": {
+                        "name": program.name,
+                        "procs": program.totalProcs,
+                        "status": program.status,
+                        "stop_signal": program.stopsignal,
+                        "exit_codes": program.exitcodes
+                    }})
+        return json.dumps({"error": "Program not found"})
 
 
 

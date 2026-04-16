@@ -13,6 +13,7 @@ class Program:
         stdout = ProgramConfig.get("stdout", f"{self.name}.out") 
         stderr = ProgramConfig.get("stderr", f"{self.name}.err")
         self.env = ProgramConfig.get("env", {})
+        self.totalProcs = ProgramConfig.get("numprocs", 1)
 
         self.workdir = ProgramConfig.get("workdir", ".")
 
