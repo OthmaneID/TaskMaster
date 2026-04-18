@@ -35,8 +35,12 @@ class MyShell(Cmd):
         ------Usage: restart <service_name>\n
         """
         response = self._send_to_server(f"restart {arg}")
-        # handle reponse accordingly
-        # ...
+        res : dict = json.loads(response)
+        
+        if res.get("error"):
+            print(res["error"])
+        else:
+            print(res["data"])
         return False
         # return True
 
@@ -48,13 +52,6 @@ class MyShell(Cmd):
         """
         response = self._send_to_server(f"status {arg}")
         res : dict = json.loads(response)
-
-        #  data that is returned :
-        # "name": program.name,
-        # "procs": program.totalProcs,
-        # "status": program.status,
-        # "stop_signal": program.stopsignal,
-        # "exit_codes": program.exitcodes
 
         if res.get("data"):
             data : dict = res['data']
@@ -101,10 +98,13 @@ class MyShell(Cmd):
         ------Usage: stop <service_name>\n
         """
         response = self._send_to_server(f"stop {arg}")
-        # handle reponse accordingly
-        # ...
+        res : dict = json.loads(response)
+        
+        if res.get("error"):
+            print(res["error"])
+        else:
+            print(res["data"])
         return False
-        # return True
     
     # def _do_wait_for_response()
 

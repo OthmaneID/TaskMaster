@@ -1,11 +1,12 @@
 import json
 import time
+import signal
 from core.Program import Program
 from core.ConfigFile import ConfigFile
 import logging
 
 from core.TcpServer import TcpServer
-from server.core.handleRequest import HandleRequest
+from core.handleRequest import HandleRequest
 
 
 
@@ -18,16 +19,29 @@ class Supervisor:
             self.programs : list[Program] = []
             self.last_config_check = 0
             self.config_check_interval = 3  # Check every 3 seconds
-            
+
             # get the global configurations
             self.logfile = self.config.config.get("globals", dict()).get("logfile", "/tmp/taskmaster.log")
             logging.basicConfig(filename=self.logfile, filemode='w', level=logging.INFO, format='%(asctime)s - %(levelname)s : %(message)s')
 
             # get Programs to supervise
             self._load_programs()
+
+            #  handle sighub to make it reload all program in case of config changes
+            signal.signal(signal.SIGHUP, self._sighup_handler)
         except Exception as e:
             print(f"config file parsing error : {e}")
             exit(1)
+
+    def _sighup_handler(self, signum, frame):
+        print("Received SIGHUP signal, reloading configuration...")
+        logging.info("Received SIGHUP signal, reloading configuration...")
+        changed, message = self.config.check_for_changes()
+        if changed:
+            self._handle_config_change(self.config.config, message)
+        else:
+            print("No configuration changes detected")
+            logging.info("No configuration changes detected")
 
     def _load_programs(self):
 
@@ -63,7 +77,6 @@ class Supervisor:
                     logging.info(f"Stopped removed program {old_prog.name}({old_prog.processNum})")
 
     def _handle_config_change(self, new_config, message):
-        """Handle configuration changes"""
         print(f"Config change detected: {message}")
         logging.info(f"Config change detected: {message}")
         
@@ -105,7 +118,7 @@ class Supervisor:
             if key not in old_programs_dict:
                 if new_prog.autostart:
                     new_prog.run()
-                    print(f"Started new program {new_prog.name}({new_prog.processNum})")
+                    # print(f"Started new program {new_prog.name}({new_prog.processNum})")
                     logging.info(f"Started new program {new_prog.name}({new_prog.processNum})")
         
         # Handle modified programs (restart if config changed)
@@ -172,16 +185,16 @@ class Supervisor:
         for program in programs_copy:
             program.updateStatus()
             status = program.status
-            print(f"{program.name}({program.processNum}) status: {status}, code: {program.process.returncode if program.process is not None else "None"}")
+            # print(f"{program.name}({program.processNum}) status: {status}, code: {program.process.returncode if program.process is not None else "None"}")
             if program.autorestart:
                 if status in ["backoff", "fatal", "down"]:
                     if program.startretries > 0:
-                            print(f"Restarting {program.name}({program.processNum}) in backoff, retries left: {program.startretries}")
+                            # print(f"Restarting {program.name}({program.processNum}) in backoff, retries left: {program.startretries}")
                             program.startretries -= 1
                             program.run()
                             logging.info(f"Restarted {program.name}({program.processNum})")
                     else:
-                        print(f"{program.name}({program.processNum}) : Max retries reached")
+                        # print(f"{program.name}({program.processNum}) : Max retries reached")
                         logging.info(f"{program.name}({program.processNum}) : Max retries reached")
 
 
@@ -189,13 +202,21 @@ class Supervisor:
     def handle_remote_command(self, cmd:list[str]):
         handler = HandleRequest()
         if cmd[0] == "list":
-            return handler.list(self.programs)
+            return handler.Program_list(self.programs)
 
         if cmd[0] == "status":
             return handler.status(cmd[1], self.programs)
 
         if cmd[0] == "start":
             return handler.start(cmd[1], self.programs)
+
+        if cmd[0] == "stop":
+            return handler.stop(cmd[1], self.programs)
+
+        if cmd[0] == "restart":
+            return handler.restart(cmd[1], self.programs)
+
+        return json.dumps({"error": "Unknown command"})
 
 
     def run(self) -> None:
@@ -221,5 +242,5 @@ class Supervisor:
             for program in self.programs:
                 if program.process and program.process.poll() is None:
                     program.process.terminate()
-                    print(f"Stopped {program.name}({program.processNum})")
+                    # print(f"Stopped {program.name}({program.processNum})")
                     logging.info(f"Stopped {program.name}({program.processNum})")

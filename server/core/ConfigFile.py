@@ -49,17 +49,57 @@ class ConfigFile:
         except FileNotFoundError:
             return False, None
 
+    # validating config file required fields 
     def validate(self):
-
         if not isinstance(self.config, dict):
             return False, "Config must be a dictionary"
-        
+
         if "programs" not in self.config:
             return False, "Config must contain 'programs' section"
-        
+
         if not isinstance(self.config["programs"], dict):
             return False, "'programs' must be a dictionary"
-        
+
+        # Validate each program configuration
+        for program_name, program_config in self.config["programs"].items():
+            if not isinstance(program_config, dict):
+                return False, f"Program '{program_name}' configuration must be a dictionary"
+
+            # Check required fields
+            if "cmd" not in program_config:
+                return False, f"Program '{program_name}' must have 'cmd' field"
+
+            # Validate field types
+            if "numprocs" in program_config and not isinstance(program_config["numprocs"], int):
+                return False, f"Program '{program_name}' 'numprocs' must be an integer"
+
+            if "autostart" in program_config and not isinstance(program_config["autostart"], bool):
+                return False, f"Program '{program_name}' 'autostart' must be a boolean"
+
+            if "autorestart" in program_config and program_config["autorestart"] not in ["always", "never", "unexpected", None]:
+                return False, f"Program '{program_name}' 'autorestart' must be 'always', 'never', or 'unexpected'"
+
+            if "exitcodes" in program_config and not isinstance(program_config["exitcodes"], list):
+                return False, f"Program '{program_name}' 'exitcodes' must be a list"
+
+            if "startretries" in program_config and not isinstance(program_config["startretries"], int):
+                return False, f"Program '{program_name}' 'startretries' must be an integer"
+
+            if "starttime" in program_config and not isinstance(program_config["starttime"], (int, float)):
+                return False, f"Program '{program_name}' 'starttime' must be a number"
+
+            if "stoptime" in program_config and not isinstance(program_config["stoptime"], (int, float)):
+                return False, f"Program '{program_name}' 'stoptime' must be a number"
+
+            if "stopsignal" in program_config and program_config["stopsignal"] not in ["HUP", "INT", "QUIT", "TERM", "KILL", "USR1", "USR2"]:
+                return False, f"Program '{program_name}' 'stopsignal' must be one of: HUP, INT, QUIT, TERM, KILL, USR1, USR2"
+
+            if "env" in program_config and not isinstance(program_config["env"], dict):
+                return False, f"Program '{program_name}' 'env' must be a dictionary"
+
+            if "umask" in program_config and not isinstance(program_config["umask"], int):
+                return False, f"Program '{program_name}' 'umask' must be an integer"
+
         return True, "Config is valid"
 
     def reload(self):

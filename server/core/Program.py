@@ -26,9 +26,13 @@ class Program:
 
 
         # verify if stdout and stderr files exist if not create them
+        self.stdout_path = stdout
+        self.stderr_path = stderr
+        self.stdout = None
+        self.stderr = None
         try:
-            self.stdout = open(stdout, "w")
-            self.stderr = open(stderr, "w")
+            self.stdout = open(stdout, "a")
+            self.stderr = open(stderr, "a")
         except Exception as e:
             print(f"Error creating stdout and stderr files for program {self.name}: {e}")
             exit(1)
@@ -41,15 +45,15 @@ class Program:
         self.exitcodes = ProgramConfig.get("exitcodes", [0])
 
         self.processNum = processNum
-        # SIGNALS = {
-        #     "HUP": signal.SIGHUP,
-        #     "INT": signal.SIGINT,
-        #     "QUIT": signal.SIGQUIT,
-        #     "TERM": signal.SIGTERM,
-        #     "KILL": signal.SIGKILL,
-        #     "USR1": signal.SIGUSR1,
-        #     "USR2": signal.SIGUSR2,
-        # }
+        self.SIGNALS = {
+            "HUP": signal.SIGHUP,
+            "INT": signal.SIGINT,
+            "QUIT": signal.SIGQUIT,
+            "TERM": signal.SIGTERM,
+            "KILL": signal.SIGKILL,
+            "USR1": signal.SIGUSR1,
+            "USR2": signal.SIGUSR2,
+        }
         self.stopsignal = ProgramConfig.get("stopsignal", "TERM")
         if self.stopsignal not in ["HUP", "INT", "QUIT", "TERM", "KILL", "USR1", "USR2"]:
             print(f"Config Error: {ProgramConfig.get("stopsignal")} cannot be handeled, please use one of these : HUP, INT, QUIT, TERM, KILL, USR1, USR2")
@@ -62,6 +66,7 @@ class Program:
         self.start_ts = 0
         
         self.status = "" # can be exited, backoff, fatal, starting, successful, down
+
 
     def run(self) -> None:
 
@@ -77,23 +82,61 @@ class Program:
         if self.process.poll() is None:
             self.status = "starting"
             self.start_ts = time.time()
-            print(f"Started {self.name}({self.processNum})")
+            # print(f"Started {self.name}({self.processNum})")
             logging.info(f"Started {self.name}({self.processNum})")
         else:
             self.status = "down"
             print(f"Failed to start {self.name}({self.processNum})")
             logging.error(f"Failed to start {self.name}({self.processNum})")
 
+    def stop(self):
+        if self.process is not None and self.process.poll() is None:
+            try:
+                sig = self.SIGNALS[self.stopsignal]
+                self.process.send_signal(sig)
+                logging.info(f"Sent {self.stopsignal} signal to {self.name}({self.processNum})")
+                
+                # Wait for graceful shutdown
+                try:
+                    self.process.wait(timeout=self.stoptime)
+                    self.status = "stopped"
+                    logging.info(f"{self.name}({self.processNum}) stopped gracefully")
+                    return True
+                except subprocess.TimeoutExpired:
+                    # Force kill if graceful shutdown fails
+                    self.process.kill()
+                    self.process.wait()
+                    self.status = "stopped"
+                    logging.warning(f"{self.name}({self.processNum}) killed after stoptime")
+                    return True
+            except Exception as e:
+                logging.error(f"Error stopping {self.name}({self.processNum}): {e}")
+                return False
+        return False
+
+    def restart(self):
+        if self.process is not None and self.process.poll() is None:
+            self.stop()
+            self.run()
+            return 1
+        else:
+            return 0
+
+    def is_alive(self) -> bool:
+        if self.process is None:
+            return False
+        return self.process.poll() is None
 
     def updateStatus(self):
         if self.process is not None:
-            if self.process.poll() is None:
-                # print(f"{self.name} : updatestatus")
+            if self.is_alive():
+                # Process is running
                 if self.start_ts + self.starttime > time.time():
                     self.status = "starting"
                 else:
                     self.status = "successful"
-            else: 
+            else:
+                # Process has exited
                 if self.process.returncode in self.exitcodes:
                     self.status = "exited"
                 else:
@@ -101,7 +144,21 @@ class Program:
                         self.status = "backoff"
                     else:
                         self.status = "fatal"
-    
+        else:
+            # No process exists
+            self.status = "down"
+
+
+    def cleanup(self):
+        if self.stdout and not self.stdout.closed:
+            self.stdout.close()
+        if self.stderr and not self.stderr.closed:
+            self.stderr.close()
+
+    def get_pid(self) -> int:
+        if self.process and self.process.poll() is None:
+            return self.process.pid
+        return None
 
     def __str__(self) -> str:
         return f"Program {self.name}({self.processNum}) : status {self.status} , Memory {self.Memory} , CPU {self.cpu}"
