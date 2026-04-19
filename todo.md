@@ -22,5 +22,10 @@
 
 11. add validation for the config file   DONE
 
+12. add a client side (cli) to interact with the server (DONE)
 
-12 . add a client side (cli) to interact with the server (DONE)
+13. add a server feature for cpu, ram usage for each program (todo)
+
+14. add endpoint for resource usage and counting 
+
+15. design the frontend interface (using vite-react)
