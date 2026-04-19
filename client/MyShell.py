@@ -90,7 +90,7 @@ class MyShell(Cmd):
         # return True
 
 
-    #  need to clarify if the stop ignores the config params like autostart, autorestart, etc.
+    #  need to clarify if the stop ignores the config params like autorestart, startretries etc.
     def do_stop(self, arg):
         """
         *****************Help*****************

@@ -29,6 +29,9 @@ class Supervisor:
 
             #  handle sighub to make it reload all program in case of config changes
             signal.signal(signal.SIGHUP, self._sighup_handler)
+
+
+            # we need to add a feature to view how much resources are being used by each program and the total used resources (cpu power and ram)
         except Exception as e:
             print(f"config file parsing error : {e}")
             exit(1)
