@@ -1,5 +1,5 @@
 from fastapi.routing import APIRouter
-from services.program import listPrograms, restartProgram, startProgram, statusProgram, stopProgram  
+from services.program import  getRamUsage, listPrograms, restartProgram, startProgram, statusProgram, stopProgram  
 
 router = APIRouter(prefix="/programs")
 
@@ -26,6 +26,6 @@ async def stop_program(service_name: str):
 async def restart_program(service_name: str):
     return restartProgram(service_name)
 
-@router.get("/resources")
-async def get_resources(): # to impliment later
-    return {"cpu": "N/A", "ram": "N/A"}
+@router.get("/ramUsage")
+async def get_ram_usage():
+    return getRamUsage()

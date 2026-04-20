@@ -14,9 +14,9 @@ class TcpServer:
             exit(1)
 
     def check_for_new_connection(self):
-        print("before : select")
+        # print("before : select")
         ready_to_read, _, _ = select.select([self.socket], [], [], 0.1)
-        print(f"ready_to_read : {ready_to_read}")
+        # print(f"ready_to_read : {ready_to_read}")
         if ready_to_read:
             client_socket, _ = self.socket.accept()
             data = self.handle_client(client_socket)

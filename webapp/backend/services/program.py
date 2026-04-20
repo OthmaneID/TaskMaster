@@ -32,3 +32,10 @@ def restartProgram(service_name: str):
     client.send(f"restart {service_name}")
     response = client.receive()
     return json.loads(response)
+
+
+def getRamUsage():
+    client = TcpClient()
+    client.send("RamUsage")
+    response = client.receive()
+    return json.loads(response)

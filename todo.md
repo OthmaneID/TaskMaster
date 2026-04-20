@@ -24,8 +24,8 @@
 
 12. add a client side (cli) to interact with the server (DONE)
 
-13. add a server feature for cpu, ram usage for each program (todo)
+13. add a server feature for cpu, ram usage for each program (TODO)
 
-14. add endpoint for resource usage and counting 
+14. add endpoint for resource usage and counting (TODO)
 
-15. design the frontend interface (using vite-react)
+15. design the frontend interface (using vite-react) (TODO)

@@ -5,6 +5,7 @@ import time
 import os
 import signal
 
+
 class Program:
     # self.status can be 
     def __init__(self, name : str, ProgramConfig : dict, processNum: int):
@@ -149,6 +150,23 @@ class Program:
             self.status = "down"
 
 
+    #  this is only gonna work on linux 
+    def get_ram_usage(self):
+        pid = self.get_pid()
+        if not pid:
+            return "N/A" # in this case the program is not running
+        with open(f"/proc/{pid}/status", "r") as f:
+            for line in f:
+                if line.startswith("VmRSS"):
+                    memory_usage = int(line.split()[1]) # current process ram usage in KB
+        convert_to_mb = memory_usage / 1024
+        if convert_to_mb < 1:
+            return f"{memory_usage} KB"
+        return f"{convert_to_mb:.2f} MB"
+
+    
+
+
     def cleanup(self):
         if self.stdout and not self.stdout.closed:
             self.stdout.close()
@@ -159,6 +177,8 @@ class Program:
         if self.process and self.process.poll() is None:
             return self.process.pid
         return None
+
+
 
     def __str__(self) -> str:
         return f"Program {self.name}({self.processNum}) : status {self.status} , Memory {self.Memory} , CPU {self.cpu}"

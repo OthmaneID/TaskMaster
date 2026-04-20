@@ -3,6 +3,7 @@ import time
 import signal
 from core.Program import Program
 from core.ConfigFile import ConfigFile
+
 import logging
 
 from core.TcpServer import TcpServer
@@ -104,6 +105,7 @@ class Supervisor:
             print(f"Error applying config changes: {e}")
             logging.error(f"Error applying config changes: {e}")
 
+
     def _apply_program_changes(self, old_programs):
         """Apply changes to programs based on new config"""
         old_programs_dict = {}
@@ -123,8 +125,7 @@ class Supervisor:
                     new_prog.run()
                     # print(f"Started new program {new_prog.name}({new_prog.processNum})")
                     logging.info(f"Started new program {new_prog.name}({new_prog.processNum})")
-        
-        # Handle modified programs (restart if config changed)
+
         for key, new_prog in new_programs_dict.items():
             if key in old_programs_dict:
                 old_prog = old_programs_dict[key]
@@ -142,8 +143,6 @@ class Supervisor:
 
 
     def _program_config_changed(self, old_prog, new_prog):
-        """Check if program configuration has changed"""
-        # Compare key configuration parameters
         old_config = {
             'cmd': old_prog.cmd,
             'env': old_prog.env,
@@ -200,7 +199,6 @@ class Supervisor:
                         # print(f"{program.name}({program.processNum}) : Max retries reached")
                         logging.info(f"{program.name}({program.processNum}) : Max retries reached")
 
-
     #  we need to handle each command (list, status <service_name>, stop <service_name>, restart <service_name>, start <service_name>)
     def handle_remote_command(self, cmd:list[str]):
         handler = HandleRequest()
@@ -218,6 +216,12 @@ class Supervisor:
 
         if cmd[0] == "restart":
             return handler.restart(cmd[1], self.programs)
+
+        if cmd[0] == "RamUsage":
+            ram_usage = {}
+            for program in self.programs:
+                ram_usage[f"{program.name} ({program.processNum})"] = program.get_ram_usage()
+            return json.dumps(ram_usage)
 
         return json.dumps({"error": "Unknown command"})
 
