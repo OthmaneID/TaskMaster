@@ -37,15 +37,18 @@ class Supervisor:
             print(f"config file parsing error : {e}")
             exit(1)
 
-    def _sighup_handler(self, signum, frame):
-        print("Received SIGHUP signal, reloading configuration...")
-        logging.info("Received SIGHUP signal, reloading configuration...")
+    def _handle_config(self):
         changed, message = self.config.check_for_changes()
         if changed:
             self._handle_config_change(self.config.config, message)
         else:
-            print("No configuration changes detected")
-            logging.info("No configuration changes detected")
+            print(message)
+            logging.info(message)
+
+    def _sighup_handler(self, signum, frame):
+        print("Received SIGHUP signal, reloading configuration...")
+        logging.info("Received SIGHUP signal, reloading configuration...")
+        self._handle_config()
 
     def _load_programs(self):
 
@@ -66,12 +69,12 @@ class Supervisor:
         self._stop_removed_programs(new_programs)
         self.programs = new_programs
 
-    def _stop_removed_programs(self, new_programs):
+    def _stop_removed_programs(self, new_programs: list[Program]):
         """Stop programs that are no longer in the config"""
         new_program_names = set()
         for prog in new_programs:
             new_program_names.add(f"{prog.name}_{prog.processNum}")
-        
+
         for old_prog in self.programs:
             old_prog_key = f"{old_prog.name}_{old_prog.processNum}"
             if old_prog_key not in new_program_names:
@@ -106,7 +109,7 @@ class Supervisor:
             logging.error(f"Error applying config changes: {e}")
 
 
-    def _apply_program_changes(self, old_programs):
+    def _apply_program_changes(self, old_programs: list[Program]):
         """Apply changes to programs based on new config"""
         old_programs_dict = {}
         for prog in old_programs:
@@ -142,10 +145,11 @@ class Supervisor:
                         logging.info(f"Started modified program {new_prog.name}({new_prog.processNum})")
 
 
-    def _program_config_changed(self, old_prog, new_prog):
+    def _program_config_changed(self, old_prog: Program, new_prog: Program):
         old_config = {
             'cmd': old_prog.cmd,
             'env': old_prog.env,
+            'numprocs': old_prog.totalProcs,
             'workdir': old_prog.workdir,
             'umask': old_prog.umask,
             'autostart': old_prog.autostart,
@@ -160,6 +164,7 @@ class Supervisor:
         new_config = {
             'cmd': new_prog.cmd,
             'env': new_prog.env,
+            'numprocs': new_prog.totalProcs,
             'workdir': new_prog.workdir,
             'umask': new_prog.umask,
             'autostart': new_prog.autostart,
@@ -175,20 +180,15 @@ class Supervisor:
 
 
     def monitor(self) -> None:
-        current_time = time.time()
-        if current_time - self.last_config_check >= self.config_check_interval:
-            changed, message = self.config.check_for_changes()
-            if changed:
-                self._handle_config_change(self.config.config, message)
-            self.last_config_check = current_time
         
+        self._handle_config()
         programs_copy = self.programs.copy()
         
         for program in programs_copy:
             program.updateStatus()
             status = program.status
-            # print(f"{program.name}({program.processNum}) status: {status}, code: {program.process.returncode if program.process is not None else "None"}")
-            if program.autorestart:
+            # check if the program has autorestart always or unexpected, and if unexpected check for exitcodes
+            if program.autorestart == "always" or (program.autorestart == "unexpected" and program.process and program.process.returncode not in program.exitcodes):
                 if status in ["backoff", "fatal", "down"]:
                     if program.startretries > 0:
                             # print(f"Restarting {program.name}({program.processNum}) in backoff, retries left: {program.startretries}")
@@ -199,28 +199,37 @@ class Supervisor:
                         # print(f"{program.name}({program.processNum}) : Max retries reached")
                         logging.info(f"{program.name}({program.processNum}) : Max retries reached")
 
-    #  we need to handle each command (list, status <service_name>, stop <service_name>, restart <service_name>, start <service_name>)
     def handle_remote_command(self, cmd:list[str]):
         handler = HandleRequest()
         if cmd[0] == "list":
             return handler.Program_list(self.programs)
-
         if cmd[0] == "status":
             return handler.status(cmd[1], self.programs)
 
         if cmd[0] == "start":
-            return handler.start(cmd[1], self.programs)
+            if len(cmd) > 2:
+                return handler.start(cmd[1], process_num=int(cmd[2]), programs=self.programs)
+            return handler.start(cmd[1], programs=self.programs)
 
         if cmd[0] == "stop":
-            return handler.stop(cmd[1], self.programs)
+            if len(cmd) > 2:
+                return handler.stop(cmd[1], process_num=int(cmd[2]), programs=self.programs)
+            return handler.stop(cmd[1], self.programs) # thinking about adding another argument which is the process number ()
 
         if cmd[0] == "restart":
+            if len(cmd) > 2:
+                return handler.restart(cmd[1], process_num=int(cmd[2]), programs=self.programs)
             return handler.restart(cmd[1], self.programs)
 
         if cmd[0] == "RamUsage":
-            ram_usage = {}
+            ram_usage = []
             for program in self.programs:
-                ram_usage[f"{program.name} ({program.processNum})"] = program.get_ram_usage()
+                ram_usage.append({
+                    "name" : program.name,
+                    "proces" : program.processNum,
+                    "ram_usage" : program.get_ram_usage()
+                })
+                # ram_usage[f"{program.name} ({program.processNum})"] = program.get_ram_usage()
             return json.dumps(ram_usage)
 
         return json.dumps({"error": "Unknown command"})

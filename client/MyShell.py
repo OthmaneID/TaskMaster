@@ -11,13 +11,13 @@ class MyShell(Cmd):
 
 
     #  what should happen if the service is already running?
-    def do_start(self, arg):
+    def do_start(self, service_name: str, process_num: int=0, *useless_args):
         """
         *****************Help*****************
         ------Start a service
-        ------Usage: start <service_name>\n
+        ------Usage: start <service_name> <process number (optional)\n
         """
-        response = self._send_to_server(f"start {arg}")
+        response = self._send_to_server(f"start {service_name} {process_num}")
         res : dict = json.loads(response)
         
         if res.get("error"):
@@ -27,14 +27,31 @@ class MyShell(Cmd):
         return False
         # return True
 
+    #  need to clarify if the stop ignores the config params like autorestart, startretries etc.
+    def do_stop(self, service_name: str, process_num: int=0, *useless_args):
+        """
+        *****************Help*****************
+        ------Stop a service
+        ------Usage: stop <service_name> <process number (optional)>\n
+        """
+        response = self._send_to_server(f"stop {service_name} {process_num}")
+        res : dict = json.loads(response)
+        
+        if res.get("error"):
+            print(res["error"])
+        else:
+            print(res["data"])
+        return False
+    
+
     # clarify if the retry is going to consume the retry count or ignore the config params
-    def do_restart(self, arg):
+    def do_restart(self, service_name: str, process_num: int=0, *useless_args):
         """
         *****************Help*****************
         ------Restart a service
-        ------Usage: restart <service_name>\n
+        ------Usage: restart <service_name> <process number (optional)>\n
         """
-        response = self._send_to_server(f"restart {arg}")
+        response = self._send_to_server(f"restart {service_name} {process_num}")
         res : dict = json.loads(response)
         
         if res.get("error"):
@@ -44,13 +61,13 @@ class MyShell(Cmd):
         return False
         # return True
 
-    def do_status(self, arg):
+    def do_status(self, service_name: str, *useless_args):
         """
         *****************Help*****************
         ------Get the status of a service
         ------Usage: status <service_name>\n
         """
-        response = self._send_to_server(f"status {arg}")
+        response = self._send_to_server(f"status {service_name}")
         res : dict = json.loads(response)
 
         if res.get("data"):
@@ -59,10 +76,17 @@ class MyShell(Cmd):
             print(f"Program Status: {data.get('name', 'N/A')}")
             print(f"{'='*50}")
             print(f"  Name        : {data.get('name', 'N/A')}")
-            print(f"  Processes   : {data.get('procs', 'N/A')}")
-            print(f"  Status      : {data.get('status', 'N/A')}")
             print(f"  Stop Signal : {data.get('stop_signal', 'N/A')}")
             print(f"  Exit Codes  : {data.get('exit_codes', 'N/A')}")
+            
+            procs = data.get('procs', [])
+            if procs:
+                print(f"\n  Processes ({len(procs)}):")
+                for proc in procs:
+                    print(f"    - Process #{proc.get('process_num', 'N/A')}")
+                    print(f"      Status  : {proc.get('status', 'N/A')}")
+                    print(f"      Retries : {proc.get('retries', 'N/A')}")
+            
             print(f"{'='*50}\n")
         else:
             if res.get('error'):
@@ -73,7 +97,7 @@ class MyShell(Cmd):
         # return True
 
     
-    def do_list(self, arg):
+    def do_list(self,arg, *useless_args):
         """
         *****************Help*****************
         ------List all services that are on config file
@@ -83,29 +107,14 @@ class MyShell(Cmd):
         response = self._send_to_server("list")
         res = json.loads(response)
         for prog in res["data"]:
-            print(f" - {prog['name']} :  {prog['status']}")
+            print(f" - {prog['name']}  #({prog["process_num"]}) :  {prog['status']}")
         # handle reponse accordingly
         # ...
         return False
         # return True
 
 
-    #  need to clarify if the stop ignores the config params like autorestart, startretries etc.
-    def do_stop(self, arg):
-        """
-        *****************Help*****************
-        ------Stop a service
-        ------Usage: stop <service_name>\n
-        """
-        response = self._send_to_server(f"stop {arg}")
-        res : dict = json.loads(response)
-        
-        if res.get("error"):
-            print(res["error"])
-        else:
-            print(res["data"])
-        return False
-    
+
     # def _do_wait_for_response()
 
 

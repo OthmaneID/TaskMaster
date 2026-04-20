@@ -118,6 +118,7 @@ class ConfigFile:
                 
                 is_valid, message = self.validate()
                 if not is_valid:
+                    print(f"Invalid config: {message}")
                     self.config = old_config  # Restore old config
                     return False, f"Invalid config: {message}"
                 

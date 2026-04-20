@@ -39,7 +39,7 @@ class Program:
             exit(1)
 
         self.autostart = ProgramConfig.get("autostart", True)
-        self.autorestart = ProgramConfig.get("autorestart")
+        self.autorestart = ProgramConfig.get("autorestart", "never")
         self.startretries = ProgramConfig.get("startretries", 0)
         self.starttime = ProgramConfig.get("starttime", 0)
         self.stoptime = ProgramConfig.get("stoptime", 1)
@@ -159,10 +159,11 @@ class Program:
             for line in f:
                 if line.startswith("VmRSS"):
                     memory_usage = int(line.split()[1]) # current process ram usage in KB
-        convert_to_mb = memory_usage / 1024
-        if convert_to_mb < 1:
-            return f"{memory_usage} KB"
-        return f"{convert_to_mb:.2f} MB"
+        return memory_usage
+        # convert_to_mb = memory_usage / 1024
+        # if convert_to_mb < 1:
+        #     return f"{memory_usage} KB"
+        # return f"{convert_to_mb:.2f} MB"
 
     
 
