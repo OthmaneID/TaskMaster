@@ -14,22 +14,31 @@ def statusProgram(service_name: str):
     response = client.receive()
     return json.loads(response)
 
-def startProgram(service_name: str):
+def startProgram(service_name: str, process_num: int = None):
     client = TcpClient()
-    client.send(f"start {service_name}")
+    if process_num is not None:
+        client.send(f"start {service_name} {process_num}")
+    else:
+        client.send(f"start {service_name}")
     response = client.receive()
     return json.loads(response)
 
-def stopProgram(service_name: str):
+def stopProgram(service_name: str, process_num: int = None):
     client = TcpClient()
-    client.send(f"stop {service_name}")
+    if process_num is not None:
+        client.send(f"stop {service_name} {process_num}")
+    else:
+        client.send(f"stop {service_name}")
     response = client.receive()
     return json.loads(response)
 
 
-def restartProgram(service_name: str):
+def restartProgram(service_name: str, process_num: int = None):
     client = TcpClient()
-    client.send(f"restart {service_name}")
+    if process_num is not None:
+        client.send(f"restart {service_name} {process_num}")
+    else:
+        client.send(f"restart {service_name}")
     response = client.receive()
     return json.loads(response)
 

@@ -204,7 +204,7 @@ class Supervisor:
         if cmd[0] == "list":
             return handler.Program_list(self.programs)
         if cmd[0] == "status":
-            return handler.status(cmd[1], self.programs)
+            return handler.status(cmd[1], programs=self.programs)
 
         if cmd[0] == "start":
             if len(cmd) > 2:
@@ -214,12 +214,12 @@ class Supervisor:
         if cmd[0] == "stop":
             if len(cmd) > 2:
                 return handler.stop(cmd[1], process_num=int(cmd[2]), programs=self.programs)
-            return handler.stop(cmd[1], self.programs) # thinking about adding another argument which is the process number ()
+            return handler.stop(cmd[1], programs=self.programs) # thinking about adding another argument which is the process number ()
 
         if cmd[0] == "restart":
             if len(cmd) > 2:
                 return handler.restart(cmd[1], process_num=int(cmd[2]), programs=self.programs)
-            return handler.restart(cmd[1], self.programs)
+            return handler.restart(cmd[1], programs=self.programs)
 
         if cmd[0] == "RamUsage":
             ram_usage = []

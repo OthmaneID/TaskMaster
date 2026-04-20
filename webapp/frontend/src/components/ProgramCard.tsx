@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Play, Square, RefreshCw } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { startProgram, stopProgram, restartProgram } from '../lib/api';
+import { startProgram, stopProgram, restartProgram, type Program } from '../lib/api';
 
 interface ProgramCardProps {
-  program: any;
+  program: Program;
   onRefresh: () => void;
 }
 
@@ -12,10 +12,10 @@ export function ProgramCard({ program, onRefresh }: ProgramCardProps) {
   const [loading, setLoading] = useState<string | null>(null);
   const isRunning = program.status?.toLowerCase() === 'successful';
 
-  const handleAction = async (action: string, serviceFn: (name: string) => Promise<any>) => {
+  const handleAction = async (action: string, serviceFn: (name: string, processNum?: number) => Promise<any>) => {
     setLoading(action);
     try {
-      await serviceFn(program.name);
+      await serviceFn(program.name, program.process_num);
       onRefresh();
     } catch (error) {
       console.error(`Failed to ${action} program:`, error);
@@ -26,13 +26,16 @@ export function ProgramCard({ program, onRefresh }: ProgramCardProps) {
 
   return (
     <div className="group relative bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className={cn(
             "w-3 h-3 rounded-full animate-pulse",
             isRunning ? "bg-green-500" : "bg-red-500"
           )} />
-          <h3 className="text-lg font-semibold text-foreground">{program.name}</h3>
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">{program.name}</h3>
+            <p className="text-xs text-muted-foreground">Process #{program.process_num}</p>
+          </div>
         </div>
         <div className={cn(
           "px-3 py-1 rounded-full text-xs font-medium",
@@ -46,7 +49,7 @@ export function ProgramCard({ program, onRefresh }: ProgramCardProps) {
 
       <div className="flex gap-2">
         <button
-          onClick={() => handleAction('start', () => startProgram(program.name))}
+          onClick={() => handleAction('start', startProgram)}
           disabled={loading === 'start' || isRunning}
           className={cn(
             "flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200",
@@ -59,7 +62,7 @@ export function ProgramCard({ program, onRefresh }: ProgramCardProps) {
           Start
         </button>
         <button
-          onClick={() => handleAction('stop', () => stopProgram(program.name))}
+          onClick={() => handleAction('stop', stopProgram)}
           disabled={loading === 'stop' || !isRunning}
           className={cn(
             "flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200",
@@ -72,7 +75,7 @@ export function ProgramCard({ program, onRefresh }: ProgramCardProps) {
           Stop
         </button>
         <button
-          onClick={() => handleAction('restart', () => restartProgram(program.name))}
+          onClick={() => handleAction('restart', restartProgram)}
           disabled={loading === 'restart'}
           className={cn(
             "flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200",

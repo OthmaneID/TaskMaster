@@ -1,12 +1,17 @@
 import socket
 import select
 
+
 class TcpClient:
     def __init__(self, host="0.0.0.0", port=2020):
         self.host = host
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((self.host, self.port))
+        try:
+            self.socket.connect((self.host, self.port))
+        except Exception as e:
+            print(f"Error connecting to server (server may be down): {e}")
+            exit(1)
         self.fds = [self.socket]
 
     def send(self, message:str):

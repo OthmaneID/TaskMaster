@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { RefreshCw, Server, Zap, Shield } from 'lucide-react';
-import { listPrograms, getRamUsage } from './lib/api';
-import { ProgramCard } from './components/ProgramCard';
+import { listPrograms, getRamUsage, type Program } from './lib/api';
+import { ServiceGroup } from './components/ServiceGroup';
 import { RamUsageDisplay } from './components/RamUsage';
 
 export function App() {
-  const [programs, setPrograms] = useState<any[]>([]);
-  const [ramUsage, setRamUsage] = useState<Record<string, number> | null>(null);
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [ramUsage, setRamUsage] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -17,7 +17,6 @@ export function App() {
         getRamUsage()
       ]);
       setPrograms(programsData);
-      console.log(programsData)
       setRamUsage(ramData);
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -39,6 +38,15 @@ export function App() {
   };
 
   const runningCount = programs.filter(p => p.status?.toLowerCase() === "successful").length;
+
+  // Group processes by service name
+  const groupedPrograms = programs.reduce((acc, program) => {
+    if (!acc[program.name]) {
+      acc[program.name] = [];
+    }
+    acc[program.name].push(program);
+    return acc;
+  }, {} as Record<string, Program[]>);
 
   return (
     <div className="min-h-screen bg-linear-to-br from-background via-background to-primary/5">
@@ -77,7 +85,7 @@ export function App() {
           <div className="bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
             <div className="flex items-center gap-3 mb-2">
               <Shield className="w-5 h-5 text-blue-500" />
-              <span className="text-sm text-muted-foreground">Total Programs</span>
+              <span className="text-sm text-muted-foreground">Total Processes</span>
             </div>
             <div className="text-3xl font-bold text-foreground">{programs.length}</div>
           </div>
@@ -88,9 +96,9 @@ export function App() {
         </div>
 
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-foreground mb-4">Programs</h2>
+          <h2 className="text-xl font-semibold text-foreground mb-4">Services</h2>
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-4">
               {[1, 2, 3].map(i => (
                 <div key={i} className="bg-card border border-border rounded-xl p-6 animate-pulse h-48" />
               ))}
@@ -98,14 +106,15 @@ export function App() {
           ) : programs.length === 0 ? (
             <div className="bg-card border border-border rounded-xl p-12 text-center">
               <Server className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No programs found</p>
+              <p className="text-muted-foreground">No processes found</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {programs.map((program, index) => (
-                <ProgramCard
-                  key={program.name + index}
-                  program={program}
+            <div className="space-y-4">
+              {Object.entries(groupedPrograms).map(([serviceName, processes]) => (
+                <ServiceGroup
+                  key={serviceName}
+                  serviceName={serviceName}
+                  processes={processes}
                   onRefresh={fetchData}
                 />
               ))}

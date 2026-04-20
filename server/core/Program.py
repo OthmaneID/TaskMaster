@@ -155,6 +155,7 @@ class Program:
         pid = self.get_pid()
         if not pid:
             return "N/A" # in this case the program is not running
+        memory_usage = "N/A"
         with open(f"/proc/{pid}/status", "r") as f:
             for line in f:
                 if line.startswith("VmRSS"):
