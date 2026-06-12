@@ -29,3 +29,5 @@
 14. add endpoint for resource usage and counting (TODO)
 
 15. design the frontend interface (using vite-react) (TODO)
+
+16. add a command for configfile reload (DOING)

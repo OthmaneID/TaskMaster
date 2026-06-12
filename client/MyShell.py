@@ -113,6 +113,20 @@ class MyShell(Cmd):
         return False
         # return True
 
+    def do_config_reload(self, arg, *useless_args):
+        """
+        *****************Help*****************
+        ------Reload the existing configuration file
+        ------Usage: config_reload\n
+        """
+        print("Reloading configuration...")
+        response = self._send_to_server("config_reload")
+        res = json.loads(response)
+        if res.get("data"):
+            print(res["data"])
+        else:
+            print("Failed to reload configuration")
+        return False
 
 
     # def _do_wait_for_response()

@@ -15,6 +15,13 @@ class Program:
         stdout = ProgramConfig.get("stdout", f"{self.name}.out") 
         stderr = ProgramConfig.get("stderr", f"{self.name}.err")
         self.env = ProgramConfig.get("env", {})
+        for key, value in self.env.items():
+            self.env[key] = str(value)
+
+        for key, value in os.environ.items():
+            if key not in self.env:
+                self.env[key] = value
+                
         self.totalProcs = ProgramConfig.get("numprocs", 1)
 
         self.workdir = ProgramConfig.get("workdir", ".")
@@ -71,24 +78,30 @@ class Program:
 
     def run(self) -> None:
 
-        self.process = subprocess.Popen(
-                            shlex.split(self.cmd),
-                            stdout=self.stdout, 
-                            stderr=self.stderr, 
-                            env=self.env, 
-                            cwd=self.workdir,
-                            preexec_fn=lambda: os.umask(self.umask),
-                        )
-        # self.process.
-        if self.process.poll() is None:
-            self.status = "starting"
-            self.start_ts = time.time()
-            # print(f"Started {self.name}({self.processNum})")
-            logging.info(f"Started {self.name}({self.processNum})")
-        else:
-            self.status = "down"
-            print(f"Failed to start {self.name}({self.processNum})")
-            logging.error(f"Failed to start {self.name}({self.processNum})")
+        try:
+
+            self.process = subprocess.Popen(
+                                shlex.split(self.cmd),
+                                stdout=self.stdout, 
+                                stderr=self.stderr, 
+                                env=self.env,
+                                cwd=self.workdir,
+                                preexec_fn=lambda: os.umask(self.umask),
+                            )
+            # self.process.
+            if self.process.poll() is None:
+                self.status = "starting"
+                self.start_ts = time.time()
+                # print(f"Started {self.name}({self.processNum})")
+                logging.info(f"Started {self.name}({self.processNum})")
+            else:
+                self.status = "down"
+                print(f"Failed to start {self.name}({self.processNum})")
+                logging.error(f"Failed to start {self.name}({self.processNum})")
+        except Exception as e:
+            print(f"Error starting {self.name}({self.processNum}): {e}")
+            logging.error(f"Error starting {self.name}({self.processNum}): {e}")
+            exit(1)
 
     def stop(self):
         if self.process is not None and self.process.poll() is None:

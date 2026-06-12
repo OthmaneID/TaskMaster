@@ -40,10 +40,11 @@ class Supervisor:
     def _handle_config(self):
         changed, message = self.config.check_for_changes()
         if changed:
-            self._handle_config_change(self.config.config, message)
+            return self._handle_config_change(self.config.config, message)
         else:
             print(message)
             logging.info(message)
+            return message
 
     def _sighup_handler(self, signum, frame):
         print("Received SIGHUP signal, reloading configuration...")
@@ -98,15 +99,18 @@ class Supervisor:
                 logging.info(f"Log file changed to: {self.logfile}")
             
             # Reload programs
+            # redo this to check to change only the modified programs and start new ones
             old_programs = self.programs.copy()
             self._load_programs()
             
             # Start new programs and restart modified ones
             self._apply_program_changes(old_programs)
+            return "Configuration reloaded successfully"
             
         except Exception as e:
             print(f"Error applying config changes: {e}")
             logging.error(f"Error applying config changes: {e}")
+            return "Error applying config changes: {e}"
 
 
     def _apply_program_changes(self, old_programs: list[Program]):
@@ -181,7 +185,7 @@ class Supervisor:
 
     def monitor(self) -> None:
         
-        self._handle_config()
+        
         programs_copy = self.programs.copy()
         
         for program in programs_copy:
@@ -231,6 +235,9 @@ class Supervisor:
                 })
                 # ram_usage[f"{program.name} ({program.processNum})"] = program.get_ram_usage()
             return json.dumps(ram_usage)
+        
+        if cmd[0] == "config_reload":
+            return json.dumps({"data": self._handle_config()})
 
         return json.dumps([{"error": "Unknown command"}])
 
@@ -252,7 +259,7 @@ class Supervisor:
                 self.monitor()
                 print("\r")
                 time.sleep(1)
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt as e:  
             print(f"program interrupted : {e}")
             # Cleanup: stop all programs
             for program in self.programs:

@@ -9,5 +9,5 @@ def sigint_handle(signum, frame):
 if __name__ == "__main__":
     client = MyShell()
     signal.signal(signal.SIGINT, sigint_handle)
-    
+
     client.cmdloop()

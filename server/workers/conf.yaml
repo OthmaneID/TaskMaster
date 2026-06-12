@@ -42,6 +42,9 @@ programs:
     exitcodes: [0]
     umask: 022
     stopsignal: TERM
+    env:
+      MYNAME: Othmane
+      code: 442
     workdir: /home/othmaneid/Desktop/1337Projects/TaskMaster
     stdout: "/home/othmaneid/Desktop/1337Projects/TaskMaster/server/workers/log/worker_sleep1.out"
     stderr: "/home/othmaneid/Desktop/1337Projects/TaskMaster/server/workers/log/worker_sleep.err"
