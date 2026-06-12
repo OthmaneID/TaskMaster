@@ -232,7 +232,7 @@ class Supervisor:
                 # ram_usage[f"{program.name} ({program.processNum})"] = program.get_ram_usage()
             return json.dumps(ram_usage)
 
-        return json.dumps({"error": "Unknown command"})
+        return json.dumps([{"error": "Unknown command"}])
 
 
     def run(self) -> None:
