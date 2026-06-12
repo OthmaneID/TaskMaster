@@ -6,6 +6,9 @@ import sys
 
 
 if __name__ == "__main__":
+    if os.geteuid() != 0:
+        print("Please run as root")
+        exit(1)
     print("Starting TaskMaster... PID :", os.getpid())
     config_path = sys.argv[1] if len(sys.argv) > 1 else "conf.yaml"
     config = ConfigFile(config_path)

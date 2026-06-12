@@ -1,14 +1,18 @@
 import json
+import os
 import time
 import signal
 from core.Program import Program
 from core.ConfigFile import ConfigFile
 
 import logging
+from logging.handlers import SMTPHandler
 
 from core.TcpServer import TcpServer
 from core.handleRequest import HandleRequest
+from dotenv import load_dotenv
 
+load_dotenv()
 
 
 class Supervisor:
@@ -24,7 +28,19 @@ class Supervisor:
             # get the global configurations
             self.logfile = self.config.config.get("globals", dict()).get("logfile", "/tmp/taskmaster.log")
             logging.basicConfig(filename=self.logfile, filemode='w', level=logging.INFO, format='%(asctime)s - %(levelname)s : %(message)s')
-
+            mailHandler = SMTPHandler(
+                mailhost=("smtp.gmail.com", 587), 
+                fromaddr=os.getenv("EMAIL"), 
+                toaddrs=[os.getenv("EMAIL")], 
+                subject="TaskMaster Alert", 
+                credentials=(os.getenv("EMAIL"), os.getenv("GOOGLE_APP_PASSWORD")),
+                secure=()
+                )
+            print("mailHandler created : ", mailHandler)
+            logging.getLogger().addHandler(mailHandler)
+            
+            
+            
             # get Programs to supervise
             self._load_programs()
 
