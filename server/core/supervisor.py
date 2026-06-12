@@ -98,8 +98,7 @@ class Supervisor:
                 print(f"Log file changed to: {self.logfile}")
                 logging.info(f"Log file changed to: {self.logfile}")
             
-            # Reload programs
-            # redo this to check to change only the modified programs and start new ones
+            # save old programs and create new program objects to compare which ones are new and what programs have been modified 
             old_programs = self.programs.copy()
             self._load_programs()
             
@@ -134,10 +133,12 @@ class Supervisor:
                     logging.info(f"Started new program {new_prog.name}({new_prog.processNum})")
 
         for key, new_prog in new_programs_dict.items():
+            # if the program is old, check if it's config has changed
             if key in old_programs_dict:
                 old_prog = old_programs_dict[key]
 
                 if self._program_config_changed(old_prog, new_prog):
+                    #  if changed , stop old program if running and start new one if autostart is true
                     if old_prog.process and old_prog.process.poll() is None:
                         print(f"Restarting modified program {new_prog.name}({new_prog.processNum})")
                         old_prog.process.terminate()
