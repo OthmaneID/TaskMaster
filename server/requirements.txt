@@ -1,2 +1,2 @@
 pyyaml
-dotenv
+python-dotenv

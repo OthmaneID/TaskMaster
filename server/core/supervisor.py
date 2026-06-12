@@ -28,6 +28,8 @@ class Supervisor:
             # get the global configurations
             self.logfile = self.config.config.get("globals", dict()).get("logfile", "/tmp/taskmaster.log")
             logging.basicConfig(filename=self.logfile, filemode='w', level=logging.INFO, format='%(asctime)s - %(levelname)s : %(message)s')
+            # mail handler for logging critical errors to email
+            
             mailHandler = SMTPHandler(
                 mailhost=("smtp.gmail.com", 587), 
                 fromaddr=os.getenv("EMAIL"), 
@@ -36,6 +38,9 @@ class Supervisor:
                 credentials=(os.getenv("EMAIL"), os.getenv("GOOGLE_APP_PASSWORD")),
                 secure=()
                 )
+            
+            mailHandler.setLevel(logging.ERROR)
+            mailHandler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s : %(message)s'))
             print("mailHandler created : ", mailHandler)
             logging.getLogger().addHandler(mailHandler)
             
